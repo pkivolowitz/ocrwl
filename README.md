@@ -259,6 +259,8 @@ else
 	perror("Error writing zeros");
 ```
 
+*Warning* ```write``` is dangerous. If you exceed the length of your buffer, you are exposing the memory of whatever comes after it possibly leaking secrets.
+
 # lseek
 
 When you opened the file for writing, the "write head" was at position 0. When you wrote 512 bytes, the "write head" moved to 512. Let's confirm this.
@@ -326,6 +328,8 @@ hyde warmup $>
 
 Using ```lseek``` you can ask to go some number of bytes away from the beginning of the file or the end of the file or from where you are right new. ```lseek``` returns the new position so what I did above is to seek 0 bytes away from where I am right now.
 
+*In case you are wondering, you can seek beyond the end of a file but not before its beginning.*
+
 ### Better style for ```WhereAmI()```
 
 Here I am adding an ```assert```. ```assert``` is your friend.
@@ -364,7 +368,106 @@ inline off_t WhereAmI(int fd) {
 
 I added the ```inline```. Please ask me about this if interested.
 
+# Let's tighten up this sample program
 
+I am going to refactor this to write the same block over and over again (4 times) incrementing the value of the data within the block. You will see how to use ```lseek``` to move around the file.
+
+Here is the output:
+
+```
+hyde warmup $> g++ open_close.cpp 
+hyde warmup $> ./a.out
+Yay! It is open!
+Initialized buffer to all 0's
+Write head: 0
+Wrote block of 0's
+Write head: 512
+
+Initialized buffer to all 1's
+Write head: 0
+Wrote block of 1's
+Write head: 512
+
+Initialized buffer to all 2's
+Write head: 0
+Wrote block of 2's
+Write head: 512
+
+Initialized buffer to all 3's
+Write head: 0
+Wrote block of 3's
+Write head: 512
+
+hyde warmup $> od -X foo.txt 
+0000000          03030303        03030303        03030303        03030303
+*
+0001000
+hyde warmup $> 
+```
+
+Here is the refactored program:
+
+```c++
+#include <iostream>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <assert.h>
+
+using namespace std;
+
+/*	WhereAmI() - this function returns the head position of the
+	file referred to by the given file descriptor.
+
+	Parameters:
+	int fd	The aforemention file descriptor which is assumed to be valid.
+
+	Returns:
+	int		The current position of the I/O head.
+*/
+
+inline off_t WhereAmI(int fd) {
+	assert(fd >= 0);
+	return lseek(fd, 0, SEEK_CUR);
+}
+
+int main() {
+	const int BSIZE = 512;
+	const int NUM_REWRITES = 4;
+
+	off_t head_pos;
+	ssize_t bytes_written;
+	unsigned char buffer[BSIZE];
+	
+	int fd = open("foo.txt", O_CREAT | O_WRONLY);
+
+	if (fd >= 0) {
+		std::cout << "Yay! It is open!" << std::endl;
+		for (int i = 0; i < NUM_REWRITES; i++) {
+			memset(buffer, i, BSIZE);
+			cout << "Initialized buffer to all " << i << "'s" << endl;
+
+			if ((head_pos = lseek(fd, 0, SEEK_SET)) != 0) {
+				cout << "Attempting to seek to beginning returned: " << head_pos << endl;
+				break;
+			}
+			cout << "Write head: " << WhereAmI(fd) << endl;
+
+			if ((bytes_written = write(fd, buffer, BSIZE)) != BSIZE) {
+				cout << "Write returned: " << bytes_written << " expected: " << BSIZE << endl;
+				perror("Error writing");
+				break;
+			}
+			cout << "Wrote block of " << i << "'s" << endl;
+			cout << "Write head: " << WhereAmI(fd) << endl << endl;
+		}
+		close(fd);
+	} else {
+		perror("The file did not open");
+	}
+	return 0;
+}
+```
 
 
 # That's all for tonight
