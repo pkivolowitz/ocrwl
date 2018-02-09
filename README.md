@@ -200,3 +200,54 @@ hyde warmup $>
 
 But this is not good enough. ```write()``` returns a value. It's value must be checked to ensure the write was successful.
 
+Here is a section from the man page for ```write()```:
+
+```
+On success, the number of bytes written is returned (zero indicates nothing was written). On error, -1 is returned, and errno is set appropriately.
+```
+
+There are lots of reasons that writes can fail. Good programmers who do not wish to bring about ```end times``` will check for errors. So, the following is better:
+
+```c++
+#include <iostream>
+#include <unistd.h>
+#include <fcntl.h>
+
+/* You want this too */
+#include <errno.h>
+
+int main() {
+	const int BSIZE = 512;
+	ssize_t bytes_written;
+	int fd = open("foo.txt", O_CREAT | O_WRONLY);
+	unsigned char buffer[BSIZE];
+
+	if (fd >= 0) {
+		std::cout << "Yay! It is open!" << std::endl;
+		memset(buffer, 0, BSIZE);
+		// Notice no std::endl...
+		std::cout << "Initialized buffer to zero\n";
+
+		bytes_written = write(fd, buffer, BSIZE);
+		if (bytes_written == BSIZE)
+			std::cout << "Wrote zeros\n";
+		else
+			perror("Error writing zeros");
+
+		close(fd);
+	} else {
+		perror("The file did not open");
+	}
+	return 0;
+}
+```
+
+Or perhaps:
+
+```c++
+if ((bytes_written = write(fd, buffer, BSIZE)) == BSIZE)
+	std::cout << "Wrote zeros\n";
+else
+	perror("Error writing zeros");
+```
+
