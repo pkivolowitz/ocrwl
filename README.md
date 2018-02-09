@@ -469,5 +469,84 @@ int main() {
 }
 ```
 
+# read()
 
-# That's all for tonight
+Now I will rewrite the program to read an existing file (since foo.txt is around now), add one the the value and write it back.
+
+```read()``` looks just like ```write()```. Remember to check for errors. Also remember that it is OK to read fewer bytes than you expected in general because, for example, you may have reached the end-of-file. From the man page:
+
+>On success, the number of bytes read is returned (zero indicates end of file), and the file position is advanced by this number. It is not an error if this number is smaller than the number of bytes requested; this may happen for example because fewer bytes are actually available right now (maybe because we were close to end-of-file, or because we are reading from a pipe, or from a terminal), or because read() was interrupted by a signal. On error, -1 is returned, and errno is set appropriately. In this case it is left unspecified whether the file position (if any) changes.
+
+```c++
+int main() {
+	const int BSIZE = 512;
+	const int NUM_REWRITES = 4;
+
+	off_t head_pos;
+	ssize_t bytes_written;
+	ssize_t bytes_read;
+	unsigned char buffer[BSIZE];
+	
+	int fd = open("foo.txt", O_RDWR);
+
+	if (fd >= 0) {
+		bytes_read = read(fd, buffer, BSIZE);
+		if (bytes_read > 0) {
+			unsigned char * p = buffer;
+			while (p < buffer + bytes_read) {
+				*(p++) += 1;
+			}
+
+			if ((head_pos = lseek(fd, 0, SEEK_SET)) != 0) {
+				cout << "Attempting to seek to beginning returned: " << head_pos << endl;
+			} else {
+				if ((bytes_written = write(fd, buffer, bytes_read)) != bytes_read) {
+					cout << "Write returned: " << bytes_written << " expected: " << bytes_read << endl;
+					perror("Error writing");
+				}
+			}
+		}
+		close(fd);
+	}
+	return 0;
+}
+```
+
+Here's the output:
+
+```
+hyde warmup $> !od
+od -X foo.txt 
+0000000          03030303        03030303        03030303        03030303
+*
+0001000
+hyde warmup $> ./a.out
+hyde warmup $> od -X foo.txt 
+0000000          04040404        04040404        04040404        04040404
+*
+0001000
+hyde warmup $> ./a.out
+hyde warmup $> od -X foo.txt 
+0000000          05050505        05050505        05050505        05050505
+*
+0001000
+hyde warmup $> 
+```
+
+Notice how the single 512 byte block has each byte going up in value by 1.
+
+**This completes the discussion of open, close, read, write and lseek**
+
+# That wicked looking ```while``` loop
+
+```c++
+unsigned char * p = buffer;
+while (p < buffer + bytes_read) {
+	*(p++) += 1;
+}
+```
+
+What's cool about this?
+
+Ask me about this in class.
+ 
