@@ -8,6 +8,8 @@ In this program you are asked to write a file that is comprised of 16 512 byte b
 
 The open system call returns an integer called a file descriptor. File descriptors are pretty cool but that's for the Operating Systems course. If you get back a value of less than 0, you've got an error. Check out the use of ```perror``` below.
 
+[open](http://man7.org/linux/man-pages/man2/open.2.html)
+
 Here is a sample of opening a file for writing. Using this syntax, the file must already exist. It's old contents will be destroyed.
 
 ```c
@@ -28,6 +30,8 @@ int fd = open("file.txt", O_RDWR);
 # close
 
 close() is simply ```close(fd);```.
+
+[close](http://man7.org/linux/man-pages/man2/close.2.html)
 
 # Putting the two together
 
@@ -140,4 +144,57 @@ int main() {
 }
 ```
 
+# write
+
+write() requires a file descriptor, a pointer to data and the number of bytes to write.
+
+[write](http://man7.org/linux/man-pages/man2/write.2.html)
+
+```c++
+#include <iostream>
+#include <unistd.h>
+#include <fcntl.h>
+
+/* You want this too */
+#include <errno.h>
+
+int main() {
+	const int BSIZE = 512;
+	int fd = open("foo.txt", O_CREAT | O_WRONLY);
+	unsigned char buffer[BSIZE];
+
+	if (fd >= 0) {
+		std::cout << "Yay! It is open!" << std::endl;
+		memset(buffer, 0, BSIZE);
+		// Notice no std::endl...
+		std::cout << "Initialized to zero\n";
+		write(fd, buffer, BSIZE);
+		std::cout << "Wrote zeros\n";
+		close(fd);
+	} else {
+		perror("The file did not open");
+	}
+	return 0;
+}
+```
+
+Below you'll see the output of the program. Then, notice the file size is exactly 512. And finally, it contains only binary zeros.
+
+```
+./a.out
+Yay! It is open!
+Initialized to zero
+Wrote zeros
+hyde warmup $> ls -l
+total 56
+-rwxr-xr-x  1 perrykivolowitz  staff  16104 Feb  8 18:45 a.out
+-rw-r--r--  1 perrykivolowitz  staff   2300 Feb  8 17:57 fileio.c
+-rw-------  1 perrykivolowitz  staff    512 Feb  8 18:47 foo.txt
+-rw-r--r--@ 1 perrykivolowitz  staff    513 Feb  8 18:45 open_close.cpp
+hyde warmup $> od -X foo.txt 
+0000000          00000000        00000000        00000000        00000000
+*
+0001000
+hyde warmup $> 
+```
 
