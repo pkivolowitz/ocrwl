@@ -198,3 +198,5 @@ hyde warmup $> od -X foo.txt
 hyde warmup $> 
 ```
 
+But this is not good enough. ```write()``` returns a value. It's value must be checked to ensure the write was successful.
+
