@@ -326,7 +326,7 @@ hyde warmup $>
 
 Using ```lseek``` you can ask to go some number of bytes away from the beginning of the file or the end of the file or from where you are right new. ```lseek``` returns the new position so what I did above is to seek 0 bytes away from where I am right now.
 
-## Better style for ```WhereAmI()```
+### Better style for ```WhereAmI()```
 
 Here I am adding an ```assert```. ```assert``` is your friend.
 
@@ -349,7 +349,7 @@ off_t WhereAmI(int fd) {
 
 Please ask me to talk about it in class.
 
-## And while we're at it
+### And while we're at it
 
 Have you seen this?
 
@@ -363,6 +363,8 @@ inline off_t WhereAmI(int fd) {
 ```
 
 I added the ```inline```. Please ask me about this if interested.
+
+
 
 
 # That's all for tonight
