@@ -116,6 +116,10 @@ Now you have exactly 512 bytes.
 
 You can certainly write a loop that puts zero or one or whatever in each byte. But why do that? Use ```memset``` instead.
 
+Notice ```memset``` comes from chapter 3 of the manual.
+
+[memset](http://man7.org/linux/man-pages/man3/memset.3.html)
+
 *Warning* ```memset``` is dangerous. If you exceed the length of your buffer, you are overwriting the memory of whatever comes after it.
 
 ```c++
@@ -202,9 +206,7 @@ But this is not good enough. ```write()``` returns a value. It's value must be c
 
 Here is a section from the man page for ```write()```:
 
-```
-On success, the number of bytes written is returned (zero indicates nothing was written). On error, -1 is returned, and errno is set appropriately.
-```
+>On success, the number of bytes written is returned (zero indicates nothing was written). On error, -1 is returned, and errno is set appropriately.
 
 There are lots of reasons that writes can fail. Good programmers who do not wish to bring about ```end times``` will check for errors. So, the following is better:
 
@@ -251,3 +253,71 @@ else
 	perror("Error writing zeros");
 ```
 
+# lseek
+
+When you opened the file for writing, the "write head" was at position 0. When you wrote 512 bytes, the "write head" moved to 512. Let's confirm this.
+
+```c++
+#include <iostream>
+#include <unistd.h>
+#include <fcntl.h>
+
+/* You want this too */
+#include <errno.h>
+
+using namespace std;
+
+off_t WhereAmI(int fd) {
+	// This causes a seek to zero bytes away
+	// from where we are right now.
+	return lseek(fd, 0, SEEK_CUR);
+}
+
+int main() {
+	const int BSIZE = 512;
+	ssize_t bytes_written;
+	int fd = open("foo.txt", O_CREAT | O_WRONLY);
+	cout << "Write head: " << WhereAmI(fd) << endl;
+
+	unsigned char buffer[BSIZE];
+
+	if (fd >= 0) {
+		std::cout << "Yay! It is open!" << std::endl;
+		memset(buffer, 0, BSIZE);
+		// Notice no std::endl...
+		std::cout << "Initialized buffer to zero\n";
+
+		if ((bytes_written = write(fd, buffer, BSIZE)) == BSIZE) {
+			std::cout << "Wrote zeros\n";
+			cout << "Write head: " << WhereAmI(fd) << endl;
+		}
+		else
+			perror("Error writing zeros");
+
+		close(fd);
+	} else {
+		perror("The file did not open");
+	}
+	return 0;
+}
+```
+
+The output:
+
+```
+hyde warmup $> ./a.out
+Write head: 0
+Yay! It is open!
+Initialized buffer to zero
+Wrote zeros
+Write head: 512
+hyde warmup $>
+```
+
+```lseek``` is the lowest level way of moving around where the next read or write will take place. It takes three arguments: which file to move around in (the fd), an offset, how to measure the offset.
+
+[lseek](https://linux.die.net/man/2/lseek) - I'll stop linking man pages after this - you know how to source this information now.
+
+Using ```lseek``` you can ask to go some number of bytes away from the beginning of the file or the end of the file or from where you are right new. ```lseek``` returns the new position so what I did above is to seek 0 bytes away from where I am right now.
+
+# That's all for tonight
