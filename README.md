@@ -1,14 +1,16 @@
 # ocrwl
 
-You may have not written any systems-like code in your young careers. Network programming, the way we are going to learn it, is all about systems-style code - that means low level - and pointers. Lots of pointers.
+You may have not written any systems-like code in your young careers. Network programming, the way we are going to learn it, is all about systems-style code - that means low level - and pointers.
 
-In this program you are asked to write a file that is comprised of 16 512 byte blocks, a total of 8KB in all. Then, read the file back in and for each 512 byte block, swap it for another 512 byte block.
+In the warm-up program you are asked to write a file that is comprised of 16 512 byte blocks, a total of 8KB in all. Then, read the file back in and for each 512 byte block, swap it for another 512 byte block. In this document I'll take you through the parts of doing this.
 
 # open
 
-The open system call returns an integer called a file descriptor. File descriptors are pretty cool but that's for the Operating Systems course. If you get back a value of less than 0, you've got an error. Check out the use of ```perror``` below.
+The open system call returns an integer called a file descriptor. File descriptors are pretty cool but that's for the Operating Systems course. If you get back a value of less than 0, you've got an error. Check out the use of ```perror``` below. ```perror``` comes from the ```errno.h``` include file.
 
 [open](http://man7.org/linux/man-pages/man2/open.2.html)
+
+[errno](http://man7.org/linux/man-pages/man3/errno.3.html)
 
 Here is a sample of opening a file for writing. Using this syntax, the file must already exist. It's old contents will be destroyed.
 
@@ -20,6 +22,8 @@ Here's a version that will create the file if it was not already present:
 ```c
 int fd = open("file.txt", O_WRONLY | O_CREAT);
 ```
+
+Notice the use of the bitwise or operator ```|```. 
 
 Here's one that opens a file for both reading and writing:
 
@@ -84,7 +88,7 @@ Now do an ```ls```. You'll see ```foo.txt``` in your directory.
 
 # A buffer
 
-Making a buffer of a specific size sounds like a job for and array of ```char```. We're interested in binary values so it is more appropriate to use ```unsigned char.```
+Making a buffer of a specific size sounds like a job for an array of ```char```. We're interested in binary values so it is more appropriate to use ```unsigned char.```
 
 ## Defining the size
 
@@ -116,7 +120,7 @@ Now you have exactly 512 bytes.
 
 You can certainly write a loop that puts zero or one or whatever in each byte. But why do that? Use ```memset``` instead.
 
-Notice ```memset``` comes from chapter 3 of the manual.
+Notice ```memset``` comes from chapter 3 of the manual. There is a pattern to the Unix manual. Chapter 2 leads to system calls and Chapter 3 leads to library calls from the standard library.
 
 [memset](http://man7.org/linux/man-pages/man3/memset.3.html)
 
@@ -181,6 +185,8 @@ int main() {
 	return 0;
 }
 ```
+
+In ```write(fd, buffer, BSIZE);``` where is the pointer? ```buffer``` is an array - the name of an array is a pointer to the data in the array.
 
 Below you'll see the output of the program. Then, notice the file size is exactly 512. And finally, it contains only binary zeros.
 
