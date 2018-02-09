@@ -320,4 +320,43 @@ hyde warmup $>
 
 Using ```lseek``` you can ask to go some number of bytes away from the beginning of the file or the end of the file or from where you are right new. ```lseek``` returns the new position so what I did above is to seek 0 bytes away from where I am right now.
 
+## Better style for ```WhereAmI()```
+
+Here I am adding an ```assert```. ```assert``` is your friend.
+
+```c++
+#include <iostream>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <assert.h>
+
+using namespace std;
+
+off_t WhereAmI(int fd) {
+	assert(fd >= 0);
+	// This causes a seek to zero bytes away
+	// from where we are right now.
+	return lseek(fd, 0, SEEK_CUR);
+}
+```
+
+Please ask me to talk about it in class.
+
+## And while we're at it
+
+Have you seen this?
+
+```c++
+inline off_t WhereAmI(int fd) {
+	assert(fd >= 0);
+	// This causes a seek to zero bytes away
+	// from where we are right now.
+	return lseek(fd, 0, SEEK_CUR);
+}
+```
+
+I added the ```inline```. Please ask me about this if interested.
+
+
 # That's all for tonight
