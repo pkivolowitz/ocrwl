@@ -4,6 +4,8 @@ You may have not written any systems-like code in your young careers. Network pr
 
 In the warm-up program you are asked to write a file that is comprised of 16 512 byte blocks, a total of 8KB in all. Then, read the file back in and for each 512 byte block, swap it for another 512 byte block. In this document I'll take you through the parts of doing this.
 
+*I just noticed I am writing binary to a file called foo.txt - oops*
+
 # open
 
 The open system call returns an integer called a file descriptor. File descriptors are pretty cool but that's for the Operating Systems course. If you get back a value of less than 0, you've got an error. Check out the use of ```perror``` below. ```perror``` comes from the ```errno.h``` include file.
